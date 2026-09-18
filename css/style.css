@@ -45,7 +45,7 @@
 }
 
 *, *::before, *::after{ box-sizing: border-box; }
-html, body{ margin:0; padding:0; }
+html, body{ margin:0; padding:0; overflow-x:hidden; max-width:100%; }
 html{ -webkit-text-size-adjust:100%; }
 body{
     background: var(--bg);
@@ -252,9 +252,9 @@ tr:hover td{ background:var(--surface-soft); }
 .logout-row button:hover{ background:var(--red-soft); color:#B8362C; }
 
 /* ---------- MAIN ---------- */
-.main{ flex:1; padding:24px 28px; min-width:0; }
+.main{ flex:1; padding:24px 28px; min-width:0; overflow-x:hidden; }
+.main-content{ flex:1; min-width:0; overflow-x:hidden; }
 .main.with-order-panel{ display:flex; gap:20px; align-items:flex-start; }
-.main-content{ flex:1; min-width:0; }
 
 .topbar{ display:flex; align-items:center; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
 .topbar .titles{ margin-right:auto; min-width:0; }
@@ -299,12 +299,25 @@ tr:hover td{ background:var(--surface-soft); }
 .cat-tile.active .cn{ color:var(--green-darker); }
 
 /* ---------- PRODUCT GRID ---------- */
-.product-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:16px; }
+.product-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));
+    gap:16px;
+    min-width:0;          /* grid konteyner o'zi ham siqilishi mumkin */
+}
 .product-card{
     box-sizing:border-box;
-    background:var(--surface); border:1.6px solid var(--border); border-radius:var(--radius-lg); padding:12px;
-    display:flex; flex-direction:column; gap:9px; transition:border-color .15s, box-shadow .15s;
-    position:relative; min-width:0;
+    background:var(--surface);
+    border:1.6px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:12px;
+    display:flex;
+    flex-direction:column; gap:9px;
+    transition:border-color .15s, box-shadow .15s;
+    position:relative;
+    min-width:0;
+    max-width:100%;
+    overflow:hidden;
 }
 .product-card.selected{ border-color:var(--green); box-shadow:0 0 0 4px var(--green-soft); }
 .product-card.unavailable{ opacity:.5; }
@@ -471,184 +484,183 @@ tr:hover td{ background:var(--surface-soft); }
    ========================================================================= */
 
 /* ---------- Tablet va kichik desktop ---------- */
-@media (max-width:1180px){
-    .stat-grid{ grid-template-columns:repeat(2,1fr); }
-    .order-panel{ width:320px; }
-}
-
-/* ---------- Tablet: afitsant paneli pastga tushadi ---------- */
-@media (max-width:1000px){
-    .main.with-order-panel{
-        flex-direction:column;
-        gap:16px;
-    }
-    .order-panel{
-        width:100%;
-        position:static;
-        order:-1;                 /* savat menyudan OLDIN chiqadi */
-    }
-    .order-items{ max-height:200px; }
-    .super-layout{ grid-template-columns:1fr; }
-}
-
-/* ---------- MOBIL (asosiy qayta ishlov) ---------- */
 @media (max-width:860px){
-    :root{ --sidebar-w:100%; --bottombar-h:74px; }
+    :root{ --sidebar-w:100%; --bottombar-h:76px; }
 
-    .app-shell{ flex-direction:column; }
+    .app-shell{ flex-direction:column; width:100%; }
 
-    /* --- SIDEBAR → pastki navigatsiya --- */
+    /* --- SIDEBAR → pastki navigatsiya (TUZATILGAN) --- */
     .sidebar{
         position:fixed; left:0; right:0; bottom:0; top:auto; z-index:120;
-        width:100%; height:auto; flex-direction:row; align-items:stretch;
-        padding:8px 6px calc(8px + env(safe-area-inset-bottom, 0px)) 6px;
+        width:100%; max-width:100%;
+        height:auto;
+        display:flex; flex-direction:row; align-items:stretch;
+        padding:6px 8px calc(6px + env(safe-area-inset-bottom, 0px)) 8px;
         border-right:none; border-top:1px solid var(--border);
-        background:rgba(255,255,255,.96);
+        background:rgba(255,255,255,.97);
         backdrop-filter:blur(12px);
         -webkit-backdrop-filter:blur(12px);
         box-shadow:0 -8px 24px -18px rgba(30,42,34,.4);
-        gap:2px;
+        gap:0;
+        overflow:hidden;
     }
     .sidebar .brandmark,
     .sidebar .sidebar-people{ display:none; }
 
+    /* nav-list: overflow yo'q, teng taqsimlangan */
     .nav-list{
-        flex:1; flex-direction:row; justify-content:space-around;
-        gap:0; overflow-x:auto; padding:0;
+        flex:1 1 auto; min-width:0;
+        display:flex; flex-direction:row;
+        justify-content:space-between; align-items:stretch;
+        gap:0; padding:0; margin:0;
+        overflow:visible;
+        list-style:none;
     }
-    .nav-list button{
-        flex:1; flex-direction:column; align-items:center; justify-content:center;
-        gap:4px; padding:8px 4px; font-size:10.5px; text-align:center;
-        min-width:0; border-radius:14px; line-height:1.15;
-    }
-    .nav-list button svg{ width:20px; height:20px; }
-    .nav-list button .lbl{
-        white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
-    }
+    .nav-list li{ flex:1 1 0; min-width:0; display:flex; }
 
+    .nav-list button{
+        all:unset;
+        box-sizing:border-box;
+        flex:1 1 0; min-width:0;
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        gap:4px; padding:8px 2px; border-radius:14px;
+        font-size:10.5px; font-weight:700; text-align:center; line-height:1.15;
+        color:var(--ink-soft);
+        cursor:pointer;
+    }
+    .nav-list button svg{ width:20px; height:20px; flex-shrink:0; }
+    .nav-list button .lbl{
+        max-width:100%; white-space:nowrap;
+        overflow:hidden; text-overflow:ellipsis;
+    }
+    .nav-list button.active{ background:var(--green); color:#fff; }
+
+    /* Chiqish tugmasi chetda, fiksirlangan kenglikda */
     .logout-row{
-        margin:0; padding:0 0 0 6px; border:none; border-left:1px solid var(--border);
-        flex-shrink:0; display:flex;
+        flex:0 0 auto;
+        margin:0; padding:0 0 0 6px;
+        border:none; border-left:1px solid var(--border);
+        display:flex; align-items:stretch;
     }
     .logout-row button{
-        flex-direction:column; align-items:center; justify-content:center;
-        gap:4px; padding:8px 10px; font-size:10.5px; width:auto; border-radius:14px;
+        all:unset;
+        box-sizing:border-box;
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        gap:4px; padding:8px 12px; border-radius:14px;
+        font-size:10.5px; font-weight:700; color:var(--ink-soft);
+        cursor:pointer; white-space:nowrap;
     }
     .logout-row button svg{ width:20px; height:20px; }
+    .logout-row button:hover{ background:var(--red-soft); color:#B8362C; }
 
-    /* --- MAIN --- */
-    .main{
-        padding:16px 14px calc(var(--bottombar-h) + 22px) 14px;
-    }
-    .main.with-order-panel{ padding-bottom:calc(var(--bottombar-h) + 22px); }
+    /* --- MAIN: bottom bar ostidan joy qoldiramiz --- */
+    .main{ padding:14px 12px calc(var(--bottombar-h) + 20px) 12px; }
+    .main.with-order-panel{ padding-bottom:calc(var(--bottombar-h) + 20px); }
 
     /* --- TOPBAR --- */
-    .topbar{ margin-bottom:16px; gap:10px; }
+    .topbar{ margin-bottom:14px; gap:10px; align-items:flex-start; }
     .topbar h2{ font-size:19px; }
-    .topbar .titles p{ font-size:12px; }
-    .searchbox{ min-width:100%; order:3; }        /* qidiruv pastga tushadi */
+    .searchbox{
+        min-width:100%; order:3; margin-top:4px;
+        max-width:100%;
+    }
     .topbar > .btn{ order:2; margin-left:auto; }
 
-    /* --- PRODUCT GRID: 2 ustun, karta moslashadi --- */
+    /* --- PRODUCT GRID: 2 ustun, kesilmaydi (TUZATILGAN) --- */
     .product-grid{
-        grid-template-columns:repeat(2, 1fr);
+        grid-template-columns:repeat(2, minmax(0, 1fr));
         gap:10px;
+        min-width:0;
     }
-    .product-card{ padding:10px; gap:7px; }
-    .product-thumb{ height:76px; font-size:28px; border-radius:12px; }
-    .product-card .p-name{ font-size:12.5px; min-height:32px; }
-    .product-card .p-price{ font-size:13px; }
-    .product-card .p-actions .btn{ padding:8px 10px; font-size:11.5px; }
-    .qty-stepper{ padding:4px; }
-    .qty-stepper button{ width:24px; height:24px; }
-    .qty-stepper .qv{ font-size:12.5px; }
+    .product-card{
+        padding:9px; gap:6px;
+        min-width:0; max-width:100%; overflow:hidden;
+    }
+    .product-thumb{ height:72px; font-size:26px; border-radius:12px; }
+    .product-card .p-cat{ font-size:9.5px; padding:3px 8px; }
+    .product-card .p-name{
+        font-size:12px; min-height:auto; line-height:1.3;
+        -webkit-line-clamp:2;
+    }
+    .product-card .p-price{ font-size:12.5px; }
+    .product-card .p-actions{ margin-top:2px; }
+    .product-card .p-actions .btn{
+        padding:7px 8px; font-size:11px; border-radius:9px;
+        white-space:nowrap;
+    }
+    .product-card .p-actions .btn svg{ width:13px; height:13px; }
+
+    /* qty-stepper mobilga moslashgan, kesilmaydi */
+    .qty-stepper{ padding:3px; border-radius:10px; min-width:0; }
+    .qty-stepper button{ width:26px; height:26px; flex-shrink:0; }
+    .qty-stepper .qv{ font-size:12.5px; padding:0 4px; }
 
     /* --- CATEGORY TILES --- */
     .cat-tiles{ gap:8px; margin-bottom:14px; }
-    .cat-tile{ min-width:80px; padding:10px 12px; }
+    .cat-tile{ min-width:78px; padding:10px 12px; }
     .cat-tile .ci{ width:32px; height:32px; margin-bottom:6px; }
     .cat-tile .cn{ font-size:11.5px; }
 
-    /* --- TABLE TILES: mobil uchun chiroyli 3 ustun --- */
-    .table-tiles{
-        grid-template-columns:repeat(3, 1fr);
-        gap:10px;
-    }
-    .table-tile{
-        padding:14px 8px;
-        border-radius:16px;
-    }
-    .table-tile .tt-ico{
-        width:36px; height:36px; border-radius:10px; margin-bottom:6px;
-    }
-    .table-tile .tt-ico svg{ width:18px; height:18px; }
-    .table-tile .tt-name{ font-size:13px; }
-    .table-tile .tt-status{ font-size:9.5px; letter-spacing:.03em; }
-    .tt-seats{
-        display:inline-flex; align-items:center; gap:3px;
-        font-size:10px; font-weight:700; color:var(--ink-faint);
-        margin-top:4px; background:rgba(255,255,255,.55);
-        padding:2px 7px; border-radius:99px;
-    }
+    /* --- TABLE TILES --- */
+    .table-tiles{ grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; }
+    .table-tile{ padding:13px 6px; border-radius:16px; min-width:0; }
+    .table-tile .tt-ico{ width:34px; height:34px; border-radius:10px; margin-bottom:6px; }
+    .table-tile .tt-name{ font-size:12.5px; }
+    .table-tile .tt-status{ font-size:9px; }
+    .tt-seats{ font-size:9.5px; padding:2px 6px; margin-top:4px; }
+    .tt-seats svg{ width:10px; height:10px; }
 
-    /* --- ORDER PANEL: to'liq kenglik, sticky pastda emas --- */
-    .order-panel{ padding:16px; border-radius:20px; }
+    /* --- ORDER PANEL: to'liq kenglik --- */
+    .order-panel{ padding:14px; border-radius:18px; width:100%; min-width:0; }
     .order-panel-head h3{ font-size:16px; }
-    .order-items{ max-height:220px; }
-    .pay-method{ padding:9px 4px; font-size:10.5px; }
+    .order-items{ max-height:200px; }
+    .pay-methods{ gap:6px; }
+    .pay-method{ padding:8px 2px; font-size:10px; }
     .pay-method svg{ width:16px; height:16px; }
-    .order-summary .sr.total{ font-size:17px; }
 
-    /* --- KARTALAR / STATLAR --- */
-    .stat-grid{ grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
-    .stat{ padding:12px 14px; gap:10px; }
-    .stat .stat-ico{ width:38px; height:38px; }
-    .stat .num{ font-size:17px; }
-    .stat .lbl{ font-size:11px; }
+    /* --- STATLAR / KARTALAR --- */
+    .stat-grid{ grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+    .stat{ padding:12px 14px; gap:10px; min-width:0; }
+    .stat .stat-ico{ width:36px; height:36px; }
+    .stat .num{ font-size:16px; }
+    .stat .lbl{ font-size:10.5px; }
 
     .grid-2{ grid-template-columns:1fr; gap:14px; }
-    .card{ padding:16px; border-radius:18px; }
+    .card{ padding:14px; border-radius:16px; min-width:0; }
 
-    /* --- TABLALAR --- */
-    .table-wrap{ margin:0 -16px; padding:0 16px; }     /* chetlari to'liq */
-    th, td{ padding:10px 8px; font-size:12.5px; }
-    th{ font-size:10px; }
+    /* --- JADVALLAR: faqat jadval ichida siljish --- */
+    .table-wrap{
+        overflow-x:auto; -webkit-overflow-scrolling:touch;
+        max-width:100%; margin:0;
+    }
+    table{ min-width:560px; }        /* jadval siqilmasin, wrap ichida siljiydi */
+    th, td{ padding:9px 8px; font-size:12px; }
 
     /* --- LOGIN --- */
-    #screen-login{ padding:16px; align-items:flex-start; padding-top:40px; }
+    #screen-login{ padding:16px; align-items:flex-start; padding-top:32px; }
     .login-head h1{ font-size:24px; }
-    .login-box{ max-width:100%; }
-    .role-grid{ grid-template-columns:1fr; gap:12px; }
-    .role-card{ padding:20px; border-radius:20px; }
-    .role-card .role-ico{ width:44px; height:44px; margin-bottom:10px; }
-    .role-card h3{ font-size:17px; }
 
     /* --- MODAL --- */
     .modal-overlay{ padding:12px; align-items:flex-end; }
     .modal{
-        padding:20px; border-radius:22px 22px 0 0; max-height:92vh;
-        max-width:100%; margin:0;
+        padding:20px; border-radius:22px 22px 0 0;
+        max-height:92vh; max-width:100%; margin:0;
     }
 
     /* --- TOAST --- */
     .toast{ bottom:calc(var(--bottombar-h) + 12px); }
 }
 
-/* ---------- KICHIK TELEFON ---------- */
 @media (max-width:420px){
-    .table-tiles{ grid-template-columns:repeat(2, 1fr); gap:9px; }
-    .product-grid{ gap:9px; }
-    .product-card .p-name{ font-size:12px; }
+    .product-grid{ gap:8px; }
+    .product-card{ padding:8px; }
+    .product-card .p-name{ font-size:11.5px; }
+    .product-card .p-price{ font-size:12px; }
+    .table-tiles{ grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
     .stat-grid{ grid-template-columns:1fr; }
-    .order-panel{ padding:14px; }
-    .sidebar{ padding-left:4px; padding-right:4px; }
-    .nav-list button{ font-size:10px; padding:7px 2px; }
-    .logout-row button{ padding:7px 8px; }
+    .nav-list button{ font-size:9.5px; }
+    .nav-list button .lbl{ font-size:9.5px; }
 }
-
-
-
-
 
 /* ---------- SUPER ADMIN ---------- */
 .expiry-chip{ font-size:11.5px; font-weight:800; padding:5px 10px; border-radius:99px; white-space:nowrap; }
