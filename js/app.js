@@ -383,7 +383,9 @@ const UI = {
     },
 
     async login() {
-        if (loginRole === 'super') { return UI.superLogin(); }
+        if (loginRole === 'super') {
+            return UI.superLogin();
+        }
         const phone = document.getElementById('login-phone').value.trim();
         const password = document.getElementById('login-password').value;
         const errEl = document.getElementById('login-err');
@@ -535,7 +537,10 @@ const UI = {
             p_cafe_id: cafeId, p_months: months, p_days: 0,
             p_amount: 0, p_method: 'naqd', p_note: null
         });
-        if (error) { toast(supaErrorMessage(error), true); return; }
+        if (error) {
+            toast(supaErrorMessage(error), true);
+            return;
+        }
         await UI.loadSuperDashboard();
         toast(`+${months} oy qo'shildi`);
     },
@@ -612,7 +617,7 @@ const UI = {
 
     updateExtendPreview(c) {
         const months = parseInt(document.getElementById('ex-months').value, 10) || 0;
-        const days   = parseInt(document.getElementById('ex-days').value, 10) || 0;
+        const days = parseInt(document.getElementById('ex-days').value, 10) || 0;
         const el = document.getElementById('ex-preview');
 
         const base = c.expires_at && !c.expired ? new Date(c.expires_at) : new Date();
@@ -630,10 +635,10 @@ const UI = {
 
     async saveExtend(cafeId) {
         const months = parseInt(document.getElementById('ex-months').value, 10) || 0;
-        const days   = parseInt(document.getElementById('ex-days').value, 10) || 0;
+        const days = parseInt(document.getElementById('ex-days').value, 10) || 0;
         const amount = parseFloat(document.getElementById('ex-amount').value) || 0;
         const method = document.getElementById('ex-method').value;
-        const note   = document.getElementById('ex-note').value.trim() || null;
+        const note = document.getElementById('ex-note').value.trim() || null;
 
         if (months <= 0 && days <= 0) {
             toast('Oy yoki kun kiritilishi shart', true);
@@ -648,7 +653,10 @@ const UI = {
             p_method: method,
             p_note: note
         });
-        if (error) { toast(supaErrorMessage(error), true); return; }
+        if (error) {
+            toast(supaErrorMessage(error), true);
+            return;
+        }
         Modal.close();
         await UI.loadSuperDashboard();
         await UI.renderSuperPayments();
@@ -1007,9 +1015,11 @@ const UI = {
         <div class="tt-ico">${icon(t.status === 'bosh' ? 'table' : 'clipboard', 20)}</div>
         <div class="tt-name">${t.name}</div>
         <div class="tt-status">${t.status === 'bosh' ? "Bo'sh" : 'Band'}</div>
+        <div class="tt-seats">${icon('users', 12)} ${t.seats || 4} kishi</div>
       </div>
     `).join('');
     },
+
     async toggleTableStatus(id) {
         const t = DB.tables.find(t => t.id === id);
         const hasOpenOrder = DB.orders.some(o => o.table_id === id && o.status !== 'tolangan');
@@ -1027,16 +1037,66 @@ const UI = {
         await refreshFromDB();
         UI.renderAdminTablesGrid();
     },
-    async addTable() {
+    addTable() {
         const nextNum = DB.tables.length + 1;
-        const {error} = await sb.from('restaurant_tables').insert({name: 'Stol ' + nextNum, cafe_id: SESSION.cafeId});
+        Modal.open(`
+          <div class="modal-head"><h3>Yangi stol</h3>
+            <button class="icon-btn sm" onclick="Modal.close()">${icon('x', 15)}</button></div>
+
+          <div class="field"><label>Stol nomi</label>
+            <input type="text" id="nt-name" value="Stol ${nextNum}" placeholder="Masalan: Stol 11"></div>
+
+          <div class="field"><label>Necha kishi sig'adi</label>
+            <div class="seat-picker" id="nt-seats">
+              ${[1, 2, 4, 6, 8, 10, 12].map(s =>
+            `<button type="button" class="seat-opt ${s === 4 ? 'active' : ''}" data-seats="${s}">${s} kishi</button>`
+        ).join('')}
+            </div>
+            <input type="number" id="nt-seats-custom" min="1" max="100" placeholder="Yoki qo'lda kiriting (masalan 15)" style="margin-top:10px;">
+          </div>
+
+          <button class="btn primary block" onclick="UI.saveTable()">${icon('check', 16)} Saqlash</button>
+        `);
+        document.querySelectorAll('#nt-seats .seat-opt').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('#nt-seats .seat-opt').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('nt-seats-custom').value = '';
+            };
+        });
+        document.getElementById('nt-seats-custom').addEventListener('input', (e) => {
+            if (e.target.value) document.querySelectorAll('#nt-seats .seat-opt').forEach(b => b.classList.remove('active'));
+        });
+    },
+
+    async saveTable() {
+        const name = document.getElementById('nt-name').value.trim();
+        const custom = parseInt(document.getElementById('nt-seats-custom').value, 10);
+        const picked = document.querySelector('#nt-seats .seat-opt.active');
+        const seats = custom > 0 ? custom : (picked ? parseInt(picked.dataset.seats, 10) : 4);
+
+        if (!name) {
+            toast('Stol nomini kiriting', true);
+            return;
+        }
+        if (!seats || seats < 1) {
+            toast("O'rindiq sonini kiriting", true);
+            return;
+        }
+
+        const {error} = await sb.from('restaurant_tables')
+            .insert({name, seats, cafe_id: SESSION.cafeId});
         if (error) {
             toast(supaErrorMessage(error), true);
             return;
         }
+
+        Modal.close();
         await refreshFromDB();
         UI.renderAdminTablesGrid();
+        toast('Stol qo\'shildi');
     },
+
 
     /* =========================================================
        ORDERS
@@ -1318,9 +1378,11 @@ const UI = {
         <div class="tt-ico">${icon(t.status === 'bosh' ? 'table' : 'clipboard', 20)}</div>
         <div class="tt-name">${t.name}</div>
         <div class="tt-status">${t.status === 'bosh' ? "Bo'sh" : 'Band'}</div>
+        <div class="tt-seats">${icon('users', 12)} ${t.seats || 4} kishi</div>
       </div>
     `).join('');
     },
+
     async renderWaiterTablesGrid() {
         await refreshFromDB();
         UI.renderWaiterTablesGridSync();
@@ -1351,6 +1413,7 @@ const UI = {
         document.getElementById('waiter-table-picker').classList.add('hidden');
         document.getElementById('waiter-order-area').classList.remove('hidden');
         document.getElementById('waiter-selected-table').textContent = t.name;
+        document.getElementById('waiter-selected-table').textContent =`${t.name}·${t.seats || 4} kishi`;
         document.getElementById('waiter-panel-waiter-name').textContent = SESSION.staffName || '—';
 
         document.querySelectorAll('#order-type-tabs button').forEach(b => b.classList.toggle('active', b.dataset.type === 'ichkarida'));
@@ -1461,7 +1524,11 @@ const UI = {
             return `
         <button class="table-strip-pill" onclick="UI.selectTable('${t.id}')">
           <div class="av">${initials(waiterName)}</div>
-          <div class="tsi"><div class="t1">${t.name}</div><div class="t2">${itemCount} taom → ${statusLabel}</div></div>
+                  <div class="tsi">
+          <div class="t1">${t.name} · ${t.seats || 4} kishi</div>
+          <div class="t2">${itemCount} taom → ${statusLabel}</div>
+        </div>
+
         </button>`;
         }).join('') || `<div class="empty-hint" style="padding:10px 0;">Hozircha band stollar yo'q</div>`;
     },
