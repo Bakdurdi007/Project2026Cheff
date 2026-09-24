@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Qorabug' POS — Kafe hisob-kitob tizimi</title>
+    <title>Green Chef — Kafe hisob-kitob tizimi</title>
+
+    <!-- Sayt ikonkasi: loyihangizning img/ papkasidagi logo -->
+    <link rel="icon" type="image/png" href="img/logo.ico">
+    <link rel="apple-touch-icon" href="img/logo.ico">
+
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -15,14 +20,16 @@
     <div class="login-box">
         <div class="login-head">
             <div class="brandmark" style="justify-content:center; margin-bottom:16px;">
-                <div class="cup" data-icon="cup" data-size="22"></div>
+                <img class="brand-logo" src="img/logo.ico" alt="Green Chef" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+                <div class="cup hidden" data-icon="cup" data-size="22"></div>
                 <div>
-                    <div class="name" style="font-size:22px;">Qorabug' POS</div>
+                    <div class="name" style="font-size:22px;">Green Chef</div>
                     <div class="tag">Kafe hisob-kitob tizimi</div>
                 </div>
             </div>
             <h1 id="login-title">Xush kelibsiz</h1>
-            <p class="muted" id="login-sub">Tizimga kirish uchun telefon raqam va parolni kiriting</p>
+            <p class="muted" id="login-sub">Tizimga kirish uchun avval rolni tanlang</p>
+            <div id="login-role-badge" class="role-badge hidden"></div>
         </div>
 
         <div id="conn-status" class="conn-banner loading"><span data-icon="settings" data-size="14" class="spin"></span> Supabase bilan ulanmoqda...</div>
@@ -41,7 +48,7 @@
             <div class="role-card" onclick="UI.chooseRole('super')">
                 <div class="role-ico" data-icon="chart" data-size="24"></div>
                 <h3>Super Admin</h3>
-                <p>Tizim egasi: barcha kafelar, obuna to'lovlari va hisobotlar..</p>
+                <p>Tizim egasi: kafelarni qo'shish, o'chirish, obuna to'lovlari va hisobotlar.</p>
             </div>
         </div>
 
@@ -50,11 +57,11 @@
             <h3 id="login-form-title" style="margin-bottom:14px;">Admin sifatida kirish</h3>
             <div class="field">
                 <label>Telefon raqam (login)</label>
-                <input type="tel" id="login-phone" placeholder="+998 90 123 45 67" inputmode="tel" autocomplete="username">
+                <input type="tel" id="login-phone" placeholder="+998 90 123 45 67" inputmode="tel" autocomplete="username" onkeydown="if(event.key==='Enter') UI.login()">
             </div>
             <div class="field">
                 <label>Parol</label>
-                <input type="password" id="login-password" placeholder="Parolni kiriting" autocomplete="current-password">
+                <input type="password" id="login-password" placeholder="Parolni kiriting" autocomplete="current-password" onkeydown="if(event.key==='Enter') UI.login()">
             </div>
             <div class="row">
                 <button class="btn ghost" onclick="UI.backToRoles()">Orqaga</button>
@@ -63,7 +70,7 @@
             <div class="form-err" id="login-err"></div>
         </div>
 
-        <!-- KAFE RO'YXATDAN O'TKAZISH -->
+        <!-- KAFE RO'YXATDAN O'TKAZISH (faqat Super Admin panelidan ham mumkin) -->
         <div class="login-form card" id="register-form">
             <h3 style="margin-bottom:14px;">Yangi kafe ro'yxatdan o'tkazish</h3>
             <div class="field">
@@ -82,6 +89,10 @@
                 <label>Parol</label>
                 <input type="password" id="reg-password" placeholder="Parol o'ylab toping">
             </div>
+            <div class="field">
+                <label>Obuna muddati (oy)</label>
+                <input type="number" id="reg-months" value="1" min="1" max="60">
+            </div>
             <div class="row">
                 <button class="btn ghost" onclick="UI.backToRoles()">Orqaga</button>
                 <button class="btn primary" style="flex:1" onclick="UI.registerCafe()">Ro'yxatdan o'tkazish</button>
@@ -89,9 +100,7 @@
             <div class="form-err" id="register-err"></div>
         </div>
 
-        <div class="login-foot" id="login-foot">
-
-        </div>
+        <div class="login-foot" id="login-foot"></div>
     </div>
 </div>
 
@@ -101,8 +110,9 @@
 <div id="screen-admin" class="app-shell hidden">
     <div class="sidebar">
         <div class="brandmark">
-            <div class="cup" data-icon="cup" data-size="19"></div>
-            <div><div class="name" id="admin-cafe-name">Qorabug'</div><div class="tag">Admin</div></div>
+            <img class="brand-logo sm" src="img/logo.png" alt="" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+            <div class="cup hidden" data-icon="cup" data-size="19"></div>
+            <div><div class="name" id="admin-cafe-name">—</div><div class="tag">Admin</div></div>
         </div>
         <ul class="nav-list">
             <li><button data-panel="a-dashboard" class="active" onclick="UI.switchAdminPanel('a-dashboard')"><span data-icon="home" data-size="17"></span><span class="lbl">Umumiy holat</span></button></li>
@@ -136,14 +146,16 @@
         <!-- MENU MANAGEMENT -->
         <div class="panel" id="a-menu">
             <div class="topbar">
-                <div class="titles"><h2>Menyu boshqaruvi</h2><p class="muted">Taom, ichimlik va salatlarni qo'shing yoki tahrirlang</p></div>
+                <div class="titles"><h2>Menyu boshqaruvi</h2><p class="muted">Taom, ichimlik, salat va qo'shimcha bo'limlarni boshqaring</p></div>
                 <div class="searchbox">
                     <span data-icon="search" data-size="16"></span>
                     <input type="search" id="admin-menu-search" placeholder="Mahsulot izlash..." oninput="UI.renderAdminMenuGrid()">
                 </div>
+                <button class="btn ghost" onclick="UI.openCategoryModal()"><span data-icon="grid" data-size="16"></span> Yangi bo'lim</button>
                 <button class="btn primary" onclick="UI.openMenuModal()"><span data-icon="plus" data-size="16"></span> Yangi mahsulot</button>
             </div>
             <div class="cat-tiles" id="admin-menu-cat-tiles"></div>
+            <div class="cat-toolbar" id="admin-cat-toolbar"></div>
             <div class="product-grid" id="admin-menu-grid"></div>
         </div>
 
@@ -199,8 +211,47 @@
         <!-- REPORT -->
         <div class="panel" id="a-report">
             <div class="topbar">
-                <div class="titles"><h2>Umumiy hisobot</h2><p class="muted">Kafe daromadi va statistikasi (bevosita Supabase view'laridan)</p></div>
+                <div class="titles"><h2>Umumiy hisobot</h2><p class="muted">Kafe daromadi va statistikasi — sana oralig'ini tanlab yuklab oling</p></div>
             </div>
+
+            <!-- SANA ORALIG'I BO'YICHA HISOBOT YUKLASH -->
+            <div class="card range-card">
+                <div class="range-head">
+                    <div>
+                        <h3>Hisobotni yuklab olish</h3>
+                        <p class="muted">Ixtiyoriy sana oralig'ini tanlang — buyurtmalar jadvali CSV fayl bo'lib yuklanadi</p>
+                    </div>
+                    <button class="btn primary" onclick="UI.downloadMyReport()"><span data-icon="download" data-size="16"></span> CSV yuklab olish</button>
+                </div>
+                <div class="range-grid">
+                    <div class="field" style="margin:0;">
+                        <label>Boshlanish sanasi</label>
+                        <input type="date" id="report-from">
+                    </div>
+                    <div class="field" style="margin:0;">
+                        <label>Tugash sanasi</label>
+                        <input type="date" id="report-to">
+                    </div>
+                    <div class="field" style="margin:0;">
+                        <label>Ko'rinish</label>
+                        <select id="report-kind">
+                            <option value="orders">Buyurtmalar (batafsil)</option>
+                            <option value="daily">Kunlik jamlanma</option>
+                            <option value="items">Mahsulotlar bo'yicha</option>
+                            <option value="staff">Xodimlar bo'yicha</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="quick-months">
+                    <button class="qm" onclick="UI.setRangePreset(0)">Bugun</button>
+                    <button class="qm" onclick="UI.setRangePreset(7)">Oxirgi 7 kun</button>
+                    <button class="qm" onclick="UI.setRangePreset(30)">Oxirgi 30 kun</button>
+                    <button class="qm" onclick="UI.setRangePreset('month')">Shu oy</button>
+                    <button class="qm" onclick="UI.setRangePreset('year')">Shu yil</button>
+                </div>
+                <div id="range-preview" class="range-preview"></div>
+            </div>
+
             <div class="stat-grid" id="report-stats"></div>
             <div class="grid-2">
                 <div class="card">
@@ -222,13 +273,40 @@
 <div id="screen-waiter" class="app-shell hidden">
     <div class="sidebar">
         <div class="brandmark">
-            <div class="cup" data-icon="cup" data-size="19"></div>
-            <div><div class="name" id="waiter-cafe-name">Qorabug'</div><div class="tag">Afitsant</div></div>
+            <img class="brand-logo sm" src="img/logo.png" alt="" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+            <div class="cup hidden" data-icon="cup" data-size="19"></div>
+            <div><div class="name" id="waiter-cafe-name">—</div><div class="tag">Afitsant</div></div>
         </div>
         <ul class="nav-list">
             <li><button data-panel="w-order" class="active" onclick="UI.switchWaiterPanel('w-order')"><span data-icon="clipboard" data-size="17"></span><span class="lbl">Buyurtma</span></button></li>
             <li><button data-panel="w-myorders" onclick="UI.switchWaiterPanel('w-myorders')"><span data-icon="list" data-size="17"></span><span class="lbl">Mening buyurtmalarim</span></button></li>
         </ul>
+
+        <!-- BILDIRISHNOMA (qo'ng'iroq) — tayyor buyurtmalar haqida -->
+        <div class="bell-wrap">
+            <button class="bell-btn" id="bell-btn" onclick="UI.toggleBell()" title="Bildirishnomalar">
+                <span data-icon="bell" data-size="17"></span>
+                <span class="bell-count hidden" id="bell-count">0</span>
+            </button>
+            <span class="lbl">Xabarlar</span>
+        </div>
+
+        <!-- Qo'ng'iroq paneli — ochiladigan ro'yxat -->
+        <div class="bell-panel hidden" id="bell-panel">
+            <div class="bell-head">
+                <div>
+                    <div class="bh-title">Tayyor buyurtmalar</div>
+                    <div class="muted" id="bell-sub">Yangi xabar yo'q</div>
+                </div>
+                <button class="icon-btn sm" onclick="UI.toggleBell()" title="Yopish">
+                    <span data-icon="x" data-size="14"></span>
+                </button>
+            </div>
+            <div class="bell-list" id="bell-list"></div>
+            <div class="bell-foot">
+                <button class="btn ghost small block" onclick="UI.markAllRead()">Hammasini o'qilgan qilish</button>
+            </div>
+        </div>
         <div class="sidebar-people" id="waiter-people"></div>
         <div class="logout-row">
             <button onclick="UI.logout()"><span data-icon="logout" data-size="17"></span><span class="lbl">Chiqish</span></button>
@@ -242,6 +320,10 @@
             <div id="waiter-table-picker">
                 <div class="topbar">
                     <div class="titles"><h2>Stolni tanlang</h2><p class="muted">Buyurtma olishni boshlash uchun stolni bosing</p></div>
+                    <button class="btn ghost small sound-toggle" id="sound-toggle" onclick="UI.toggleSound()">
+                        <span data-icon="bell-off" data-size="15"></span>
+                        <span class="st-label">Ovozni yoqish</span>
+                    </button>
                 </div>
                 <div class="table-tiles" id="waiter-tables-grid"></div>
             </div>
@@ -282,20 +364,14 @@
                     <div class="order-items" id="waiter-cart-list"></div>
 
                     <div class="order-summary">
-                        <div class="sr"><span>Mahsulotlar</span><span id="sum-count">0 ta</span></div>
-                        <div class="sr total"><span>Jami summa</span><span id="waiter-cart-total">0 so'm</span></div>
+                        <div class="sr"><span>Taomlar soni</span><span id="sum-count">0 ta</span></div>
+                        <div class="sr total"><span>Jami</span><span id="waiter-cart-total">0 so'm</span></div>
                     </div>
 
                     <div class="pay-methods" id="pay-methods">
-                        <button class="pay-method active" data-pay="naqd" onclick="UI.setPayMethod('naqd')">
-                            <span data-icon="cash" data-size="18"></span> Naqd
-                        </button>
-                        <button class="pay-method" data-pay="karta" onclick="UI.setPayMethod('karta')">
-                            <span data-icon="card" data-size="18"></span> Karta
-                        </button>
-                        <button class="pay-method" data-pay="qr" onclick="UI.setPayMethod('qr')">
-                            <span data-icon="qr" data-size="18"></span> QR kod
-                        </button>
+                        <button class="pay-method active" data-pay="naqd" onclick="UI.setPayMethod('naqd')"><span data-icon="cash" data-size="18"></span>Naqd</button>
+                        <button class="pay-method" data-pay="karta" onclick="UI.setPayMethod('karta')"><span data-icon="card" data-size="18"></span>Karta</button>
+                        <button class="pay-method" data-pay="qr" onclick="UI.setPayMethod('qr')"><span data-icon="qr" data-size="18"></span>QR kod</button>
                     </div>
 
                     <button class="btn primary block" id="submit-order-btn" onclick="UI.submitOrder()"><span data-icon="check" data-size="16"></span> Buyurtmani yuborish</button>
@@ -305,7 +381,9 @@
 
         <!-- MY ORDERS -->
         <div class="panel" id="w-myorders">
-            <div class="topbar"><div class="titles"><h2>Mening buyurtmalarim</h2><p class="muted">Siz qabul qilgan buyurtmalar tarixi</p></div></div>
+            <div class="topbar">
+                <div class="titles"><h2>Mening buyurtmalarim</h2><p class="muted">Siz qabul qilgan barcha buyurtmalar</p></div>
+            </div>
             <div class="card">
                 <div class="table-wrap">
                     <table id="waiter-my-orders-table"><thead>
@@ -323,13 +401,14 @@
 <div id="screen-super" class="app-shell hidden">
     <div class="sidebar">
         <div class="brandmark">
-            <div class="cup" data-icon="settings" data-size="19"></div>
-            <div><div class="name">Super Admin</div><div class="tag">Tizim egasi</div></div>
+            <img class="brand-logo sm" src="img/logo.png" alt="" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+            <div class="cup hidden" data-icon="cup" data-size="19"></div>
+            <div><div class="name">Green Chef</div><div class="tag">Super Admin</div></div>
         </div>
         <ul class="nav-list">
-            <li><button data-panel="s-cafes" class="active" onclick="UI.switchSuperPanel('s-cafes')"><span data-icon="grid" data-size="17"></span><span class="lbl">Kafelar</span></button></li>
-            <li><button data-panel="s-subs" onclick="UI.switchSuperPanel('s-subs')"><span data-icon="cash" data-size="17"></span><span class="lbl">To'lovlar</span></button></li>
-            <li><button data-panel="s-report" onclick="UI.switchSuperPanel('s-report')"><span data-icon="chart" data-size="17"></span><span class="lbl">Hisobotlar</span></button></li>
+            <li><button data-panel="s-cafes" class="active" onclick="UI.switchSuperPanel('s-cafes')"><span data-icon="home" data-size="17"></span><span class="lbl">Kafelar</span></button></li>
+            <li><button data-panel="s-payments" onclick="UI.switchSuperPanel('s-payments')"><span data-icon="cash" data-size="17"></span><span class="lbl">Obuna to'lovlari</span></button></li>
+            <li><button data-panel="s-report" onclick="UI.switchSuperPanel('s-report')"><span data-icon="chart" data-size="17"></span><span class="lbl">Hisobot</span></button></li>
         </ul>
         <div class="sidebar-people" id="super-people"></div>
         <div class="logout-row">
@@ -338,62 +417,74 @@
     </div>
 
     <div class="main">
-        <!-- KAFELAR -->
+        <!-- CAFES: ADD / DELETE -->
         <div class="panel active" id="s-cafes">
             <div class="topbar">
-                <div class="titles"><h2>Kafelar nazorati</h2><p class="muted">Obuna muddati, tushum va holat — barcha kafelar</p></div>
-                <button class="btn ghost" onclick="UI.loadSuperDashboard()"><span data-icon="check" data-size="16"></span> Yangilash</button>
+                <div class="titles"><h2>Kafelar boshqaruvi</h2><p class="muted">Yangi kafe qo'shing, mavjudini o'chiring yoki obunasini uzaytiring</p></div>
+                <button class="btn primary" onclick="UI.openNewCafeModal()"><span data-icon="plus" data-size="16"></span> Yangi kafe qo'shish</button>
             </div>
+
             <div class="stat-grid" id="super-stats"></div>
+
             <div class="card">
+                <h3 style="margin-bottom:14px;">Barcha kafelar</h3>
                 <div class="table-wrap">
                     <table id="super-cafes-table"><thead>
-                    <tr><th>Kafe</th><th>Egasi / Telefon</th><th>Muddat tugashi</th><th>Qolgan</th><th>Jami tushum</th><th>Holat</th><th></th></tr>
+                    <tr><th>#</th><th>Kafe nomi</th><th>Admin (login)</th><th>Telefon</th><th>Xodimlar</th><th>Obuna</th><th>Tugash sanasi</th><th></th></tr>
                     </thead><tbody></tbody></table>
                 </div>
             </div>
         </div>
 
-        <!-- TO'LOVLAR -->
-        <div class="panel" id="s-subs">
+        <!-- SUBSCRIPTION PAYMENTS -->
+        <div class="panel" id="s-payments">
             <div class="topbar">
-                <div class="titles"><h2>Obuna to'lovlari tarixi</h2><p class="muted">Barcha kafelar uchun qabul qilingan to'lovlar</p></div>
+                <div class="titles"><h2>Obuna to'lovlari</h2><p class="muted">Kafelardan olingan to'lovlar tarixi</p></div>
             </div>
             <div class="card">
                 <div class="table-wrap">
                     <table id="super-payments-table"><thead>
-                    <tr><th>Kafe</th><th>Oy</th><th>Summa</th><th>Usul</th><th>Davr</th><th>Izoh</th><th>Vaqt</th></tr>
+                    <tr><th>Kafe</th><th>Davr</th><th>Summa</th><th>Izoh</th><th>Vaqt</th><th></th></tr>
                     </thead><tbody></tbody></table>
                 </div>
             </div>
         </div>
 
-        <!-- HISOBOTLAR -->
+        <!-- SUPER REPORT -->
         <div class="panel" id="s-report">
             <div class="topbar">
-                <div class="titles"><h2>Hisobotlar</h2><p class="muted">Kafe tanlang — ichki hisobotlarini ko'rasiz</p></div>
+                <div class="titles"><h2>Kafe hisoboti</h2><p class="muted">Tanlangan kafening to'liq statistikasi</p></div>
                 <select id="super-report-cafe" onchange="UI.renderSuperReport()" style="width:auto;"></select>
             </div>
             <div class="stat-grid" id="super-report-stats"></div>
             <div class="grid-2">
-                <div class="card"><h3 style="margin-bottom:14px;">Toifalar bo'yicha tushum</h3><div id="super-report-category"></div></div>
-                <div class="card"><h3 style="margin-bottom:14px;">Eng ko'p sotilgan mahsulotlar</h3><div id="super-report-top"></div></div>
+                <div class="card">
+                    <h3 style="margin-bottom:14px;">Toifalar bo'yicha tushum</h3>
+                    <div id="super-report-category"></div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom:14px;">Eng ko'p sotilgan mahsulotlar</h3>
+                    <div id="super-report-top"></div>
+                </div>
             </div>
             <div class="card" style="margin-top:18px;">
-                <h3 style="margin-bottom:14px;">To'lov tarixi</h3>
-                <div class="table-wrap"><table id="super-report-payments"><thead>
-                <tr><th>Oy</th><th>Summa</th><th>Davr</th><th>Vaqt</th></tr>
-                </thead><tbody></tbody></table></div>
+                <h3 style="margin-bottom:14px;">Obuna to'lovlari</h3>
+                <div class="table-wrap">
+                    <table id="super-report-payments"><thead>
+                    <tr><th>Muddat</th><th>Summa</th><th>Davr</th><th>To'langan vaqt</th></tr>
+                    </thead><tbody></tbody></table>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-
-<div id="toast" class="toast"></div>
+<!-- MODAL ROOT + TOAST -->
 <div id="modal-root"></div>
+<div class="toast" id="toast"></div>
+<div class="toast toast-alert" id="toast-alert"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
