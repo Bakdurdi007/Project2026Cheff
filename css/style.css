@@ -1152,56 +1152,369 @@ tr:hover td{ background:var(--surface-soft); }
    MOBIL — pastki navigatsiyada qongiroq
    ========================================================================== */
 
+
+
+
+
+/* Chop etishda bildirishnomalar chiqmaydi */
+
+
+/* ============================================================================
+   MOBIL — BITTA YAXLIT BLOK (<=860px)
+   ============================================================================
+   Pastki panelda 3 ta guruh: nav-list | qongiroq | chiqish
+   Har biri o'z kengligini oladi, hech biri boshqasini siqmaydi.
+   ========================================================================== */
 @media (max-width:860px){
-    .bell-wrap{
-        flex:0 0 auto;
-        margin:0; padding:0 4px 0 0;
-        display:flex; align-items:stretch;
+    :root{ --sidebar-w:100%; --bottombar-h:76px; }
+
+    /* --- Ildiz: gorizontal siljishni butunlay to'xtatamiz --- */
+    html, body{
+        width:100%;
+        max-width:100%;
+        overflow-x:hidden;
     }
-    .bell-btn{
-        flex-direction:column; align-items:center; justify-content:center;
-        gap:3px; padding:6px 8px; font-size:10px;
-        min-width:56px; border-radius:14px; line-height:1.1;
-    }
-    .bell-btn svg{ width:21px; height:21px; }
-    .bell-wrap .lbl{
-        display:block;
-        font-size:9.5px; font-weight:700; color:var(--ink-soft);
-        text-align:center; white-space:nowrap;
-    }
-    .bell-count{
-        top:2px; left:calc(50% + 4px);
-        min-width:16px; height:16px; font-size:9.5px;
+    .app-shell{
+        flex-direction:column;
+        min-height:100vh;
+        max-width:100%;
+        overflow-x:hidden;
     }
 
-    /* Panel mobil ekranga moslashadi — pastki navigatsiya ustidan chiqadi */
+    /* --- SIDEBAR -> PASTKI PANEL --- */
+    .sidebar{
+        position:fixed;
+        left:0; right:0; bottom:0; top:auto;
+        z-index:120;
+        width:100%;
+        max-width:100%;
+        height:calc(var(--bottombar-h) + env(safe-area-inset-bottom, 0px));
+        flex-direction:row;
+        align-items:stretch;
+        justify-content:space-between;
+        padding:6px 4px calc(6px + env(safe-area-inset-bottom, 0px)) 4px;
+        border-right:none;
+        border-top:1px solid var(--border);
+        background:rgba(255,255,255,.97);
+        backdrop-filter:blur(12px);
+        -webkit-backdrop-filter:blur(12px);
+        box-shadow:0 -8px 24px -18px rgba(30,42,34,.4);
+        gap:0;
+        overflow:hidden;
+    }
+    .sidebar .brandmark,
+    .sidebar .sidebar-people{ display:none !important; }
+
+    /* --- NAV GURUHI: qolgan kenglikni egallaydi --- */
+    .nav-list{
+        flex:1 1 auto;
+        min-width:0;
+        display:flex;
+        flex-direction:row;
+        align-items:stretch;
+        justify-content:space-between;
+        gap:1px;
+        margin:0;
+        padding:0;
+        overflow:hidden;
+    }
+    .nav-list li{
+        flex:1 1 0;
+        min-width:0;
+        display:flex;
+    }
+    .nav-list button{
+        flex:1 1 0;
+        min-width:0;
+        width:100%;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:3px;
+        padding:6px 2px;
+        font-size:10px;
+        font-weight:700;
+        text-align:center;
+        border-radius:14px;
+        line-height:1.1;
+    }
+    .nav-list button svg{ width:20px; height:20px; flex-shrink:0; }
+    .nav-list button .lbl{
+        display:block;
+        max-width:100%;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+
+    /* --- QONGIROQ: nav va chiqish orasida, aniq kenglik --- */
+    .bell-wrap{
+        flex:0 0 auto;
+        width:62px;
+        min-width:0;
+        margin:0;
+        padding:0 2px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        border-left:1px solid var(--border);
+    }
+    .bell-btn{
+        all:unset;
+        box-sizing:border-box;
+        cursor:pointer;
+        position:relative;
+        width:100%;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:3px;
+        padding:6px 2px;
+        border-radius:14px;
+        color:var(--ink-soft);
+        line-height:1.1;
+    }
+    .bell-btn svg{ width:20px; height:20px; flex-shrink:0; }
+    .bell-wrap .lbl{
+        display:block;
+        font-size:10px;
+        font-weight:700;
+        color:var(--ink-soft);
+        text-align:center;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        max-width:100%;
+    }
+    .bell-btn.has-unread{ background:var(--green-soft); color:var(--green-darker); }
+    .bell-btn.has-unread .lbl{ color:var(--green-darker); }
+    .bell-count{
+        position:absolute;
+        top:3px;
+        right:8px;
+        left:auto;
+        min-width:16px;
+        height:16px;
+        padding:0 4px;
+        font-size:9.5px;
+        border-width:1.5px;
+    }
+
+    /* --- QONGIROQ PANELI: fixed, pastki paneldan yuqorida --- */
     .bell-panel{
         position:fixed;
-        left:10px; right:10px; bottom:calc(var(--bottombar-h) + env(safe-area-inset-bottom, 0px) + 12px);
-        width:auto; max-width:none;
-        max-height:min(60vh, 420px);
+        left:8px;
+        right:8px;
+        bottom:calc(var(--bottombar-h) + env(safe-area-inset-bottom, 0px) + 10px);
+        width:auto;
+        max-width:none;
+        max-height:min(58vh, 400px);
         z-index:190;
     }
 
+    /* --- CHIQISH: nav dan keyin, aniq kenglik --- */
+    .logout-row{
+        flex:0 0 auto;
+        width:62px;
+        margin:0;
+        padding:0 2px;
+        border:none;
+        border-left:1px solid var(--border);
+        display:flex;
+        align-items:stretch;
+    }
+    .logout-row button{
+        all:unset;
+        box-sizing:border-box;
+        cursor:pointer;
+        width:100%;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:3px;
+        padding:6px 2px;
+        font-size:10px;
+        font-weight:700;
+        border-radius:14px;
+        line-height:1.1;
+        color:var(--ink-soft);
+    }
+    .logout-row button svg{ width:20px; height:20px; flex-shrink:0; }
+    .logout-row button .lbl{
+        display:block;
+        max-width:100%;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+
+    /* --- MAIN: pastki panel uchun joy --- */
+    .main{
+        width:100%;
+        max-width:100%;
+        min-width:0;
+        padding:16px 14px calc(var(--bottombar-h) + env(safe-area-inset-bottom, 0px) + 20px) 14px;
+    }
+    .main.with-order-panel{
+        padding-bottom:calc(var(--bottombar-h) + env(safe-area-inset-bottom, 0px) + 20px);
+        overflow-x:hidden;
+    }
+    .main-content{ min-width:0; max-width:100%; }
+
+    /* --- TOPBAR --- */
+    .topbar{ margin-bottom:16px; gap:10px; width:100%; min-width:0; }
+    .topbar h2{ font-size:19px; }
+    .topbar .titles p{ font-size:12px; }
+    .topbar .titles{ min-width:0; }
+    .searchbox{ min-width:0; width:100%; max-width:100%; order:3; }
+    .topbar > .btn,
+    .topbar > .sound-toggle{ order:2; margin-left:auto; flex-shrink:0; }
+
+    /* --- MAHSULOT KARTALARI: 2 ustun --- */
+    .product-grid{
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:10px;
+        width:100%;
+    }
+    .product-card{ padding:10px; gap:7px; min-width:0; }
+    .product-thumb{ height:76px; font-size:28px; border-radius:12px; }
+    .product-card .p-name{ font-size:12.5px; min-height:32px; }
+    .product-card .p-price{ font-size:13px; }
+    .product-card .p-actions .btn{ padding:8px 10px; font-size:11.5px; }
+    .qty-stepper{ padding:4px; }
+    .qty-stepper button{ width:24px; height:24px; }
+    .qty-stepper .qv{ font-size:12.5px; }
+
+    /* --- KATEGORIYA PLITKALARI --- */
+    .cat-tiles{ gap:8px; margin-bottom:12px; width:100%; overflow-x:auto; }
+    .cat-tile{ min-width:78px; padding:10px 12px; }
+    .cat-tile .ci{ width:32px; height:32px; margin-bottom:6px; }
+    .cat-tile .cn{ font-size:11.5px; }
+    .cat-tile .cc{ font-size:10px; }
+
+    /* --- STOL PLITKALARI: 3 ustun --- */
+    .table-tiles{
+        grid-template-columns:repeat(3, minmax(0, 1fr));
+        gap:10px;
+        width:100%;
+    }
+    .table-tile{ padding:14px 6px; border-radius:16px; min-width:0; }
+    .table-tile .tt-ico{ width:36px; height:36px; border-radius:10px; margin-bottom:6px; }
+    .table-tile .tt-ico svg{ width:18px; height:18px; }
+    .table-tile .tt-name{ font-size:12.5px; overflow:hidden; text-overflow:ellipsis; }
+    .table-tile .tt-status{ font-size:9.5px; letter-spacing:.03em; }
+    .tt-seats{
+        display:inline-flex; align-items:center; gap:3px;
+        font-size:9.5px; font-weight:700; color:var(--ink-faint);
+        margin-top:4px; background:rgba(255,255,255,.55);
+        padding:2px 6px; border-radius:99px;
+    }
+    .table-tile .tt-del{ opacity:1; }
+
+    /* --- BUYURTMA PANELI --- */
+    .order-panel{
+        width:100%;
+        max-width:100%;
+        padding:16px;
+        border-radius:20px;
+        position:static;
+        order:-1;
+        min-width:0;
+    }
+    .order-panel-head h3{ font-size:16px; }
+    .order-items{ max-height:220px; }
+    .pay-methods{ gap:6px; }
+    .pay-method{ padding:9px 3px; font-size:10.5px; min-width:0; }
+    .pay-method svg{ width:16px; height:16px; }
+    .order-summary .sr.total{ font-size:17px; }
+    .order-item-row .oi-name{ font-size:12px; }
+
+    /* --- STATISTIKA --- */
+    .stat-grid{
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:10px;
+        margin-bottom:16px;
+    }
+    .stat{ padding:12px 12px; gap:10px; min-width:0; }
+    .stat .stat-ico{ width:36px; height:36px; }
+    .stat .num{ font-size:16px; }
+    .stat .lbl{ font-size:10.5px; }
+
+    .grid-2{ grid-template-columns:minmax(0, 1fr); gap:14px; }
+    .card{ padding:16px; border-radius:18px; min-width:0; }
+
+    /* --- JADVALLAR: gorizontal siljiydi, sahifani cho'zmaydi --- */
+    .table-wrap{
+        margin:0 -16px;
+        padding:0 16px;
+        overflow-x:auto;
+        max-width:calc(100% + 32px);
+        -webkit-overflow-scrolling:touch;
+    }
+    table{ min-width:520px; }
+    th, td{ padding:10px 8px; font-size:12.5px; }
+    th{ font-size:10px; }
+
+    /* --- HISOBOT SANA ORALIG'I --- */
+    .range-grid{ grid-template-columns:minmax(0, 1fr); gap:12px; }
+    .range-head{ flex-direction:column; align-items:stretch; }
+    .quick-months{ gap:6px; }
+    .quick-months .qm{ padding:8px 13px; font-size:12px; }
+
+    /* --- LOGIN --- */
+    #screen-login{ padding:16px; align-items:flex-start; padding-top:34px; }
+    .login-head h1{ font-size:24px; }
+    .login-box{ max-width:100%; width:100%; }
+    .role-grid{ grid-template-columns:minmax(0, 1fr); gap:12px; }
+    .role-card{ padding:20px; border-radius:20px; }
+    .role-card .role-ico{ width:44px; height:44px; margin-bottom:10px; }
+    .role-card h3{ font-size:17px; }
+
+    /* --- MODAL --- */
+    .modal-overlay{ padding:12px; align-items:flex-end; }
+    .modal{
+        padding:20px;
+        border-radius:22px 22px 0 0;
+        max-height:92vh;
+        max-width:100%;
+        width:100%;
+        margin:0;
+    }
+
+    /* --- TOAST --- */
+    .toast{ bottom:calc(var(--bottombar-h) + env(safe-area-inset-bottom, 0px) + 12px); }
     .toast-alert{
         top:10px;
         padding:13px 16px;
         gap:11px;
         border-radius:16px;
+        max-width:calc(100vw - 24px);
     }
     .toast-alert .ta-ico{ width:38px; height:38px; border-radius:12px; }
     .toast-alert .ta-title{ font-size:14.5px; }
     .toast-alert .ta-sub{ font-size:11.5px; }
+
+    /* --- OBUNA / SUPER ADMIN --- */
+    .super-layout{ grid-template-columns:minmax(0, 1fr); }
+    .extend-preview{ flex-direction:column; align-items:flex-start; gap:4px; }
+    .expiry-chip{ font-size:11px; padding:4px 9px; }
 }
 
-@media (max-width:420px){
-    .bell-btn{ min-width:48px; padding:5px 6px; }
-    .bell-wrap .lbl{ font-size:9px; }
-    .toast-alert{ padding:11px 13px; gap:9px; }
-    .toast-alert .ta-title{ font-size:13.5px; }
-}
-
-/* Chop etishda bildirishnomalar chiqmaydi */
-@media print{
-    .bell-wrap, .bell-panel, .toast-alert, .sound-toggle{ display:none !important; }
+/* ============================================================================
+   KICHIK TELEFON (<=380px) — yana torroq
+   ========================================================================== */
+@media (max-width:380px){
+    :root{ --bottombar-h:70px; }
+    .table-tiles{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:9px; }
+    .product-grid{ gap:9px; }
+    .product-card .p-name{ font-size:12px; }
+    .stat-grid{ grid-template-columns:minmax(0, 1fr); }
+    .order-panel{ padding:14px; }
+    .nav-list button{ font-size:9px; padding:5px 1px; }
+    .nav-list button svg{ width:18px; height:18px; }
+    .bell-wrap, .logout-row{ width:54px; }
+    .bell-btn svg, .logout-row button svg{ width:18px; height:18px; }
+    .bell-wrap .lbl, .logout-row button .lbl{ font-size:9px; }
 }
