@@ -1518,3 +1518,97 @@ tr:hover td{ background:var(--surface-soft); }
     .bell-btn svg, .logout-row button svg{ width:18px; height:18px; }
     .bell-wrap .lbl, .logout-row button .lbl{ font-size:9px; }
 }
+
+/* ============================================================================
+   VAZNLIK MAHSULOTLAR (kg) — o'lchov turi uslublari
+   ----------------------------------------------------------------------------
+   Baliq, qo'zichoq kabi taomlar donabay emas, kilogramm bilan sotiladi.
+   Admin modalida o'lchov tanlanadi, savatda esa raqam kiritish maydoni
+   chiqadi (stepper o'rniga).
+   ========================================================================== */
+
+/* --- Admin modalida o'lchov tanlash (Donabay / Kilogramm) --- */
+.unit-picker{ display:flex; flex-direction:column; gap:8px; }
+.unit-opt{
+    all:unset; box-sizing:border-box; cursor:pointer;
+    display:flex; align-items:center; gap:12px;
+    padding:12px 14px; border-radius:14px;
+    border:1.6px solid var(--border); background:var(--surface-soft);
+    color:var(--ink-soft);
+    transition:border-color .15s, background .15s, color .15s;
+}
+.unit-opt:hover{ border-color:var(--green); color:var(--ink); }
+.unit-opt.active{ background:var(--green-soft); border-color:var(--green); color:var(--green-darker); }
+.unit-opt svg{ flex-shrink:0; }
+.unit-opt .uo-body{ min-width:0; }
+.unit-opt .uo-title{ font-size:13.5px; font-weight:800; }
+.unit-opt .uo-sub{ font-size:11.5px; font-weight:600; color:var(--ink-faint); margin-top:2px; }
+.unit-opt.active .uo-sub{ color:var(--green-darker); opacity:.75; }
+
+/* --- Narx yonidagi "/ kg" belgisi --- */
+.p-unit{ font-size:11px; font-weight:700; color:var(--ink-faint); }
+
+/* --- Savatdagi "kg" teg --- */
+.kg-tag{
+    display:inline-block; font-size:9.5px; font-weight:800;
+    background:var(--purple-soft); color:#4F31A8;
+    padding:1px 6px; border-radius:99px; margin-left:4px;
+    vertical-align:middle; letter-spacing:.03em;
+}
+
+/* --- Mahsulot kartasidagi kg kiritish maydoni --- */
+.kg-row{ display:flex; gap:6px; align-items:stretch; }
+.kg-input-wrap{ flex:1; min-width:0; position:relative; display:flex; align-items:center; }
+.kg-input{
+    box-sizing:border-box;
+    width:100%;
+    border:1.6px solid var(--border);
+    background:var(--surface-soft);
+    border-radius:11px;
+    padding:9px 34px 9px 11px;
+    font-size:14px; font-weight:800;
+    color:var(--ink); outline:none;
+    font-variant-numeric:tabular-nums;
+    transition:border-color .15s, box-shadow .15s, background .15s;
+}
+.kg-input:focus{
+    border-color:var(--green); background:#fff;
+    box-shadow:0 0 0 3px var(--green-soft);
+}
+.kg-input::placeholder{ color:var(--ink-faint); font-weight:700; }
+.kg-suffix{
+    position:absolute; right:10px;
+    font-size:10.5px; font-weight:800; color:var(--ink-faint);
+    pointer-events:none; letter-spacing:.03em;
+}
+.kg-add{ flex-shrink:0; padding:9px 11px; border-radius:11px; }
+.kg-hint{
+    font-size:11px; font-weight:700; color:var(--green-darker);
+    background:var(--green-soft); border-radius:9px;
+    padding:6px 10px; text-align:center;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.product-card.selected .kg-hint{ background:var(--green-soft-2); }
+
+/* --- Mobil: kg maydoni tor ekranga moslashadi --- */
+@media (max-width:860px){
+    .kg-row{ gap:5px; }
+    .kg-input{ padding:8px 30px 8px 9px; font-size:13.5px; }
+    .kg-suffix{ right:8px; font-size:10px; }
+    .kg-add{ padding:8px 10px; }
+    .kg-hint{ font-size:10.5px; padding:5px 8px; }
+    .unit-opt{ padding:11px 12px; gap:10px; }
+    .unit-opt .uo-title{ font-size:13px; }
+    .unit-opt .uo-sub{ font-size:11px; }
+}
+
+@media (max-width:380px){
+    .kg-input{ font-size:13px; padding:8px 28px 8px 8px; }
+    .kg-add{ padding:8px; }
+    .kg-hint{ font-size:10px; }
+}
+
+/* --- Chop etishda kg maydonlari kerak emas (chekda matn ko'rinadi) --- */
+@media print{
+    .kg-row, .kg-hint, .unit-picker{ display:none !important; }
+}

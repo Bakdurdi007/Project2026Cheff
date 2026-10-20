@@ -160,6 +160,41 @@ function num(n) {
     return Math.round(Number(n) || 0).toLocaleString('fr-FR').replace(/,/g, ' ');
 }
 
+/* -------------------------------------------------------------------------
+   OLCHOV TURI YORDAMCHILARI  (dona / kg)
+   -------------------------------------------------------------------------
+   Baliq, qozichoq kabi taomlar donabay emas, kilogramm bilan sotiladi.
+   Quyidagi funksiyalar miqdorni shunga mos formatlaydi.
+------------------------------------------------------------------------- */
+const UNIT_META = {
+    dona: { label: 'dona', short: 'ta' },
+    kg:   { label: 'kg',   short: 'kg' },
+};
+
+/* 2.400 -> "2.4" | 3 -> "3" */
+function qtyText(qty, unit) {
+    const n = Number(qty) || 0;
+    if (unit === 'kg') return String(parseFloat(n.toFixed(3)));
+    return String(Math.round(n));
+}
+
+/* "2.4 kg" yoki "3 dona" */
+function qtyLabel(qty, unit) {
+    const u = UNIT_META[unit] || UNIT_META.dona;
+    return qtyText(qty, unit) + ' ' + u.label;
+}
+
+/* Savatda qisqa korinish: "2.4 kg" yoki "x3" */
+function qtyShort(qty, unit) {
+    if (unit === 'kg') return qtyText(qty, unit) + ' kg';
+    return 'x' + qtyText(qty, unit);
+}
+
+/* Bitta qatorning summasi */
+function lineTotal(item) {
+    return (Number(item.price) || 0) * (Number(item.quantity) || 0);
+}
+
 function nowStrFromISO(iso) {
     const d = new Date(iso);
     return d.toLocaleDateString('uz-UZ') + ' ' + d.toLocaleTimeString('uz-UZ', {hour: '2-digit', minute: '2-digit'});
@@ -1213,7 +1248,8 @@ const UI = {
         <div class="product-thumb" style="background:${catBg(m.category_id)};">${esc(m.emoji || '🍽️')}</div>
         <span class="pill ${catBadgeClass(m.category_id)} dot p-cat">${esc(catName(m.category_id))}</span>
         <div class="p-name">${esc(m.name)}</div>
-        <div class="p-price">${money(m.price)}</div>
+        <div class="p-price">${money(m.price)}${m.unit === 'kg' ? ' <span class="p-unit">/ kg</span>' : ''}</div>
+        ${m.unit === 'kg' ? `<div class="p-stock">${icon('wine', 11)} Vazn bilan sotiladi</div>` : ''}
         ${catKind(m.category_id) === 'extra' ? `<div class="p-stock">${icon('wine', 11)} Qo'shimcha bo'lim</div>` : ''}
       </div>
     `).join('') || `<div class="empty-hint">Mahsulot topilmadi</div>`;
@@ -1231,6 +1267,7 @@ const UI = {
             `<option value="${c.id}" ${item && item.category_id === c.id ? 'selected' : ''}>${esc(c.name)}${catKind(c.id) === 'extra' ? " (qo'shimcha)" : ''}</option>`
         ).join('');
         const emoji = item ? (item.emoji || '🍽️') : '🍽️';
+        const unit = item ? (item.unit || 'dona') : 'dona';
         const emojiGrid = EMOJI_CHOICES.map(e =>
             `<button type="button" class="${e === emoji ? 'active' : ''}" onclick="UI.pickEmoji(this,'${e}')">${e}</button>`
         ).join('');
@@ -1241,7 +1278,30 @@ const UI = {
       <div class="field"><label>Nomi</label><input type="text" id="mm-name" value="${item ? esc(item.name) : ''}" placeholder="Masalan: Lag'mon"></div>
       <div class="row" style="gap:12px; align-items:flex-start;">
         <div class="field" style="flex:1;"><label>Bo'lim</label><select id="mm-cat">${catOptions}</select></div>
-        <div class="field" style="width:110px;"><label>Narxi (so'm)</label><input type="number" id="mm-price" value="${item ? item.price : ''}" placeholder="30000"></div>
+        <div class="field" style="width:120px;">
+          <label id="mm-price-label">Narxi (so'm)</label>
+          <input type="number" id="mm-price" value="${item ? item.price : ''}" placeholder="30000">
+        </div>
+      </div>
+
+      <!-- OLCHOV TURI: donabay yoki kilogramm -->
+      <div class="field"><label>Qanday sotiladi?</label>
+        <div class="unit-picker" id="mm-unit-picker">
+          <button type="button" class="unit-opt ${unit === 'dona' ? 'active' : ''}" data-unit="dona" onclick="UI.pickUnit(this)">
+            ${icon('grid', 18)}
+            <div class="uo-body">
+              <div class="uo-title">Donabay</div>
+              <div class="uo-sub">1 ta, 2 ta (lag'mon, choy)</div>
+            </div>
+          </button>
+          <button type="button" class="unit-opt ${unit === 'kg' ? 'active' : ''}" data-unit="kg" onclick="UI.pickUnit(this)">
+            ${icon('wine', 18)}
+            <div class="uo-body">
+              <div class="uo-title">Kilogramm bilan</div>
+              <div class="uo-sub">Vazni aniq emas (baliq, qo'zichoq)</div>
+            </div>
+          </button>
+        </div>
       </div>
       <div class="field"><label>Belgi (emoji)</label>
         <input type="text" id="mm-emoji" value="${esc(emoji)}" maxlength="4" style="margin-bottom:10px;">
@@ -1255,6 +1315,24 @@ const UI = {
       </div>
       <button class="btn primary block" onclick="UI.saveMenuItem('${item ? item.id : ''}')">${icon('check', 16)} Saqlash</button>
     `);
+
+        /* Narx yorlig'i tanlangan olchovga moslashadi */
+        UI.syncPriceLabel(unit);
+    },
+
+    /* Olchov turi tanlash */
+    pickUnit(btn) {
+        btn.parentElement.querySelectorAll('.unit-opt').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        UI.syncPriceLabel(btn.dataset.unit);
+    },
+
+    syncPriceLabel(unit) {
+        const label = document.getElementById('mm-price-label');
+        const input = document.getElementById('mm-price');
+        if (!label) return;
+        label.textContent = unit === 'kg' ? 'Narxi (1 kg uchun)' : 'Narxi (som)';
+        if (input) input.placeholder = unit === 'kg' ? '120000' : '30000';
     },
 
     pickEmoji(btn, e) {
@@ -1275,7 +1353,11 @@ const UI = {
             return;
         }
 
-        const payload = {name, category_id, price, emoji, is_available, cafe_id: SESSION.cafeId};
+        /* Olchov turini olamiz */
+        const unitEl = document.querySelector('#mm-unit-picker .unit-opt.active');
+        const unit = unitEl ? unitEl.dataset.unit : 'dona';
+
+        const payload = {name, category_id, price, emoji, is_available, unit, cafe_id: SESSION.cafeId};
         let error;
         if (id) {
             /* Cafe izolyatsiyasi: faqat shu kafening mahsulotini yangilaymiz */
@@ -1681,15 +1763,17 @@ const UI = {
         if (!o) return;
 
         /* Mahsulot qatorlari — ikki ustunga tekislangan */
-        const lines = (o.items || []).map(it =>
-            `<div class="r-item">
+        const lines = (o.items || []).map(it => {
+            const unit = it.unit || 'dona';
+            const qty = Number(it.quantity) || 0;
+            return `<div class="r-item">
           <div class="r-col-item">
             <div class="r-name">${esc(it.item_name)}</div>
-            <div class="r-qty-price">${it.quantity} × ${money(it.price)}</div>
+            <div class="r-qty-price">${qtyLabel(qty, unit)} &times; ${money(it.price)}${unit === 'kg' ? ' /kg' : ''}</div>
           </div>
-          <div class="r-col-sum">${money(it.price * it.quantity)}</div>
-        </div>`
-        ).join('') || `<div class="r-item"><div class="r-col-item"><div class="r-name">—</div></div><div class="r-col-sum">—</div></div>`;
+          <div class="r-col-sum">${money(it.price * qty)}</div>
+        </div>`;
+        }).join('') || `<div class="r-item"><div class="r-col-item"><div class="r-name">—</div></div><div class="r-col-sum">—</div></div>`;
 
         /* Shtrix-kod chizig'i — buyurtma ID dan barqaror naqsh */
         const seed = String(o.id).replace(/-/g, '');
@@ -2027,8 +2111,14 @@ const UI = {
 
         if (items.length) {
             sections.push('MAHSULOTLAR BO\'YICHA\r\n' + csvFromRows(
-                ['Mahsulot', 'Bo\'lim', 'Sotilgan dona', 'Summa'],
-                items.map(it => [it.item_name, it.category_name || '—', it.qty_sold || 0, it.revenue || 0])
+                ['Mahsulot', 'Bo\'lim', 'Sotilgan miqdor', 'Olchov', 'Summa'],
+                items.map(it => [
+                    it.item_name,
+                    it.category_name || '—',
+                    qtyText(it.qty_sold, it.unit || 'dona'),
+                    (UNIT_META[it.unit] || UNIT_META.dona).label,
+                    it.revenue || 0,
+                ])
             ));
         }
 
@@ -2150,7 +2240,7 @@ const UI = {
 
         document.getElementById('report-top-items').innerHTML = reportList(rep, 'topItems').length ? reportList(rep, 'topItems').map((it, i) => `
       <div class="row" style="justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13.5px;">
-        <span>${i + 1}. ${esc(it.item_name)}</span><b>${it.qty_sold} dona</b>
+        <span>${i + 1}. ${esc(it.item_name)}</span><b>${qtyLabel(it.qty_sold, it.unit || 'dona')}</b>
       </div>
     `).join('') : `<div class="empty-hint">Ma'lumot yo'q</div>`;
     },
@@ -2583,7 +2673,7 @@ const UI = {
         const tops = reportList(rep, 'top_items');
         document.getElementById('super-report-top').innerHTML = tops.length ? tops.map((it, i) => `
       <div class="row" style="justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13.5px;">
-        <span>${i + 1}. ${esc(it.item_name)}</span><b>${it.qty_sold} dona</b></div>`).join('')
+        <span>${i + 1}. ${esc(it.item_name)}</span><b>${qtyLabel(it.qty_sold, it.unit || 'dona')}</b></div>`).join('')
             : `<div class="empty-hint">Ma'lumot yo'q</div>`;
 
         const pays = reportList(rep, 'payments');
@@ -2691,18 +2781,46 @@ const UI = {
             (!q || m.name.toLowerCase().includes(q))
         );
         document.getElementById('waiter-menu-grid').innerHTML = items.map(m => {
-            const qty = waiterCart[m.id] || 0;
+            const entry = waiterCart[m.id];
+            const inCart = !!entry;
+            const qty = entry ? (typeof entry === 'object' ? Number(entry.qty) : Number(entry)) : 0;
+            const isKg = m.unit === 'kg';
+
+            /* --- VAZNLIK MAHSULOT: raqam kiritish maydoni --- */
+            if (isKg) {
+                return `
+        <div class="product-card ${inCart ? 'selected' : ''}">
+          <div class="product-thumb" style="background:${catBg(m.category_id)};">${esc(m.emoji || '🐟')}</div>
+          <span class="pill ${catBadgeClass(m.category_id)} dot p-cat">${esc(catName(m.category_id))}</span>
+          <div class="p-name">${esc(m.name)}</div>
+          <div class="p-price">${money(m.price)} <span class="p-unit">/ kg</span></div>
+          <div class="kg-row">
+            <div class="kg-input-wrap">
+              <input type="text" inputmode="decimal" class="kg-input" id="kg-input-${m.id}"
+                value="${inCart ? qtyText(qty, 'kg') : ''}"
+                placeholder="0.0"
+                oninput="UI.setCartWeight('${m.id}', this.value)"
+                onkeydown="if(event.key==='Enter'){ this.blur(); }">
+              <span class="kg-suffix">kg</span>
+            </div>
+            <button class="btn primary small kg-add" onclick="UI.focusKg('${m.id}')">${icon('plus', 14)}</button>
+          </div>
+          <div class="kg-hint" id="kg-hint-${m.id}">${inCart ? '= ' + money(m.price * qty) : 'Tarozidan vaznni kiriting'}</div>
+        </div>`;
+            }
+
+            /* --- DONABAY MAHSULOT: oddiy stepper --- */
             return `
-        <div class="product-card ${qty > 0 ? 'selected' : ''}">
+        <div class="product-card ${inCart ? 'selected' : ''}">
           <div class="product-thumb" style="background:${catBg(m.category_id)};">${esc(m.emoji || '🍽️')}</div>
           <span class="pill ${catBadgeClass(m.category_id)} dot p-cat">${esc(catName(m.category_id))}</span>
           <div class="p-name">${esc(m.name)}</div>
           <div class="p-price">${money(m.price)}</div>
           <div class="p-actions">
-            ${qty > 0 ? `
+            ${inCart ? `
               <div class="qty-stepper">
                 <button onclick="UI.changeCartQty('${m.id}',-1)">${icon('minus', 14)}</button>
-                <span class="qv">${qty}</span>
+                <span class="qv">${qtyText(qty, 'dona')}</span>
                 <button onclick="UI.changeCartQty('${m.id}',1)">${icon('plus', 14)}</button>
               </div>
             ` : `<button class="btn outline small block" onclick="UI.addToCart('${m.id}')">${icon('plus', 14)} Qo'shish</button>`}
@@ -2711,39 +2829,123 @@ const UI = {
         }).join('') || `<div class="empty-hint">Mahsulot topilmadi</div>`;
     },
 
+    /* Savatdagi har bir yozuv endi OBYEKT: { qty, unit } */
+
     addToCart(menuId) {
-        waiterCart[menuId] = (waiterCart[menuId] || 0) + 1;
+        const m = DB.menu.find(x => x.id === menuId);
+        if (!m) return;
+
+        /* Vaznli mahsulot: savatga tushgach raqam maydoni ochiladi */
+        if (m.unit === 'kg') {
+            if (!waiterCart[menuId]) waiterCart[menuId] = { qty: 0, unit: 'kg' };
+            UI.renderWaiterMenuGrid();
+            UI.renderWaiterCart();
+            setTimeout(() => UI.focusKg(menuId), 40);
+            return;
+        }
+
+        const cur = waiterCart[menuId];
+        const qty = (cur && typeof cur === 'object' ? Number(cur.qty) : Number(cur)) || 0;
+        waiterCart[menuId] = { qty: qty + 1, unit: 'dona' };
         UI.renderWaiterMenuGrid();
         UI.renderWaiterCart();
     },
 
     changeCartQty(menuId, delta) {
-        waiterCart[menuId] = (waiterCart[menuId] || 0) + delta;
-        if (waiterCart[menuId] <= 0) delete waiterCart[menuId];
+        const cur = waiterCart[menuId];
+        if (!cur) return;
+        const qty = (typeof cur === 'object' ? Number(cur.qty) : Number(cur)) || 0;
+        const next = qty + delta;
+        if (next <= 0) delete waiterCart[menuId];
+        else waiterCart[menuId] = { qty: next, unit: typeof cur === 'object' ? cur.unit : 'dona' };
         UI.renderWaiterMenuGrid();
         UI.renderWaiterCart();
+    },
+
+    /* Vaznni qolda kiritish (kg) — afitsant tarozidan oqiydi */
+    setCartWeight(menuId, value) {
+        const raw = String(value === undefined ? '' : value).replace(',', '.').replace(/[^0-9.]/g, '');
+        const num = parseFloat(raw);
+
+        if (!raw || isNaN(num) || num <= 0) {
+            delete waiterCart[menuId];
+            UI.renderWaiterMenuGrid();
+            UI.renderWaiterCart();
+            return;
+        }
+
+        const capped = Math.min(num, 500);
+        waiterCart[menuId] = { qty: parseFloat(capped.toFixed(3)), unit: 'kg' };
+
+        /* Faqat izoh va jami summani yangilaymiz — fokus yoqolmasin */
+        const m = DB.menu.find(x => x.id === menuId);
+        const hint = document.getElementById('kg-hint-' + menuId);
+        if (m && hint) hint.textContent = '= ' + money(m.price * capped);
+        UI.updateCartTotals();
+    },
+
+    /* Jami son va summani qayta hisoblash (fokusni buzmagan holda) */
+    updateCartTotals() {
+        const entries = Object.entries(waiterCart);
+        let total = 0, count = 0;
+
+        entries.forEach(([menuId, entry]) => {
+            const m = DB.menu.find(x => x.id === menuId);
+            if (!m) return;
+            const qty = (typeof entry === 'object' ? Number(entry.qty) : Number(entry)) || 0;
+            const unit = (typeof entry === 'object' ? entry.unit : m.unit) || 'dona';
+            total += m.price * qty;
+            count += (unit === 'kg') ? 1 : qty;
+        });
+
+        const cEl = document.getElementById('sum-count');
+        const tEl = document.getElementById('waiter-cart-total');
+        if (cEl) cEl.textContent = count + ' pozitsiya';
+        if (tEl) tEl.textContent = money(total);
+    },
+
+    /* Savatdan butunlay olib tashlash */
+    removeFromCart(menuId) {
+        delete waiterCart[menuId];
+        UI.renderWaiterMenuGrid();
+        UI.renderWaiterCart();
+    },
+
+    /* Vazn maydoniga fokus */
+    focusKg(menuId) {
+        const el = document.getElementById('kg-input-' + menuId);
+        if (el) { el.focus(); el.select(); }
     },
 
     renderWaiterCart() {
         const entries = Object.entries(waiterCart);
         let total = 0, count = 0;
-        document.getElementById('waiter-cart-list').innerHTML = entries.map(([menuId, qty]) => {
+
+        document.getElementById('waiter-cart-list').innerHTML = entries.map(([menuId, entry]) => {
             const m = DB.menu.find(x => x.id === menuId);
             if (!m) return '';
-            total += m.price * qty;
-            count += qty;
+
+            const qty = (typeof entry === 'object' ? Number(entry.qty) : Number(entry)) || 0;
+            const unit = (typeof entry === 'object' ? entry.unit : m.unit) || 'dona';
+            const sum = m.price * qty;
+
+            /* kg ni bitta pozitsiya deb sanaymiz — "2.4 pozitsiya" bolmasin */
+            total += sum;
+            count += (unit === 'kg') ? 1 : qty;
+
             return `
         <div class="order-item-row">
           <div class="oi-thumb" style="background:${catBg(m.category_id)};">${esc(m.emoji || '🍽️')}</div>
           <div class="oi-info">
-            <div class="oi-name">${esc(m.name)}</div>
-            <div class="oi-qty">${qty} × ${money(m.price)}</div>
+            <div class="oi-name">${esc(m.name)}${unit === 'kg' ? ' <span class="kg-tag">kg</span>' : ''}</div>
+            <div class="oi-qty">${qtyLabel(qty, unit)} × ${money(m.price)}${unit === 'kg' ? ' /kg' : ''}</div>
           </div>
-          <div class="oi-price">${money(m.price * qty)}</div>
-          <button class="icon-btn sm oi-remove" onclick="UI.changeCartQty('${menuId}', -${qty})">${icon('trash', 14)}</button>
+          <div class="oi-price">${money(sum)}</div>
+          <button class="icon-btn sm oi-remove" onclick="UI.removeFromCart('${menuId}')">${icon('trash', 14)}</button>
         </div>`;
-        }).join('') || `<div class="empty-hint">Savat bo'sh — menyudan tanlang</div>`;
-        document.getElementById('sum-count').textContent = count + ' ta';
+        }).join('') || `<div class="empty-hint">Savat bosh — menyudan tanlang</div>`;
+
+        document.getElementById('sum-count').textContent = count + ' pozitsiya';
         document.getElementById('waiter-cart-total').textContent = money(total);
     },
 
@@ -2772,13 +2974,35 @@ const UI = {
             return;
         }
         if (entries.length === 0) {
-            toast("Savat bo'sh", true);
+            toast("Savat bosh", true);
+            return;
+        }
+
+        /* Vazni kiritilmagan mahsulot bolsa — ogohlantiramiz */
+        const noWeight = entries.filter(([id, e]) => {
+            const m = DB.menu.find(x => x.id === id);
+            const qty = (typeof e === 'object' ? Number(e.qty) : Number(e)) || 0;
+            return m && m.unit === 'kg' && qty <= 0;
+        });
+        if (noWeight.length) {
+            toast('Vazn kiritilmagan mahsulot bor — kg ni kiriting', true);
+            UI.focusKg(noWeight[0][0]);
             return;
         }
 
         const btn = document.getElementById('submit-order-btn');
         btn.disabled = true;
-        const items = entries.map(([menu_item_id, quantity]) => ({menu_item_id, quantity}));
+        /* Kasr miqdorlarni togri yuboramiz (2.415 kg) */
+        const items = entries.map(([menu_item_id, entry]) => {
+            const m = DB.menu.find(x => x.id === menu_item_id);
+            const qty = (typeof entry === 'object' ? Number(entry.qty) : Number(entry)) || 0;
+            const unit = (typeof entry === 'object' ? entry.unit : (m ? m.unit : 'dona')) || 'dona';
+            return {
+                menu_item_id,
+                quantity: unit === 'kg' ? parseFloat(qty.toFixed(3)) : Math.round(qty),
+                unit,
+            };
+        });
 
         const {error} = await sb.rpc('create_order', {
             p_cafe_id: SESSION.cafeId,
@@ -2813,7 +3037,7 @@ const UI = {
         document.getElementById('waiter-my-orders-table').querySelector('tbody').innerHTML = mine.map(o => `
       <tr>
         <td><b>${esc(o.tableName)}</b></td>
-        <td class="muted">${esc(o.items.map(it => it.item_name + ' ×' + it.quantity).join(', ')) || '—'}</td>
+        <td class="muted">${esc(o.items.map(it => it.item_name + ' ' + qtyShort(it.quantity, it.unit || 'dona')).join(', ')) || '—'}</td>
         <td>${UI.payPill(o.payment_method)}</td>
         <td><b>${money(o.total_amount)}</b></td>
         <td>${UI.statusPill(o.status)}</td>
