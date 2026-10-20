@@ -1612,3 +1612,123 @@ tr:hover td{ background:var(--surface-soft); }
 @media print{
     .kg-row, .kg-hint, .unit-picker{ display:none !important; }
 }
+
+/* ============================================================================
+   BOLIMLAR BO'YICHA ENG KOP SOTILGANLAR — hisobot paneli
+   Har bir bolim alohida blok: sarlavha + tushum + mahsulotlar royxati.
+   ========================================================================== */
+
+.cat-top-head{ margin-bottom:16px; }
+.cat-top-head h3{ margin-bottom:4px; }
+
+/* Har bir bolim kartochkasi */
+.cat-stat{
+    border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--surface);
+    padding:16px 18px; margin-bottom:14px;
+}
+.cat-stat:last-of-type{ margin-bottom:0; }
+
+/* Sarlavha qatori: ikonka + nom + tushum */
+.cat-stat .cs-head{
+    display:flex; align-items:center; gap:12px;
+    padding-bottom:12px; border-bottom:1px solid var(--border);
+    margin-bottom:12px;
+}
+.cat-stat .cs-ico{
+    width:38px; height:38px; border-radius:11px; flex-shrink:0;
+    background:var(--green-soft); color:var(--green-darker);
+    display:flex; align-items:center; justify-content:center;
+}
+.cat-stat .cs-title{ flex:1; min-width:0; }
+.cat-stat .cs-name{
+    font-size:14.5px; font-weight:800; line-height:1.25;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.cat-stat .cs-meta{ font-size:11.5px; color:var(--ink-soft); font-weight:600; margin-top:2px; }
+.cat-stat .cs-rev{ text-align:right; flex-shrink:0; }
+.cat-stat .cs-rev-num{
+    font-size:15px; font-weight:800; color:var(--green-darker);
+    white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+.cat-stat .cs-rev-lbl{
+    font-size:10px; font-weight:700; color:var(--ink-faint);
+    text-transform:uppercase; letter-spacing:.05em; margin-top:1px;
+}
+
+/* Mahsulot qatori: orin + nom + miqdor + ustun + summa */
+.cat-stat .cs-items{ display:flex; flex-direction:column; gap:11px; }
+.cat-stat .cs-item{ display:flex; align-items:flex-start; gap:11px; }
+.cat-stat .cs-rank{
+    width:22px; height:22px; border-radius:7px; flex-shrink:0;
+    background:var(--surface-soft); color:var(--ink-soft);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:800; margin-top:1px;
+}
+.cat-stat .cs-item:first-child .cs-rank{
+    background:var(--green); color:#fff;
+}
+.cat-stat .cs-item-body{ flex:1; min-width:0; }
+.cat-stat .cs-item-row{
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    margin-bottom:5px;
+}
+.cat-stat .cs-item-name{
+    font-size:12.5px; font-weight:700; line-height:1.3;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.cat-stat .cs-item-qty{
+    font-size:11px; font-weight:800; color:var(--ink-soft);
+    white-space:nowrap; flex-shrink:0;
+}
+
+/* Nisbiy ustun — eng katta mahsulot 100% */
+.cat-stat .cs-bar{
+    height:6px; border-radius:4px; background:var(--surface-soft);
+    overflow:hidden;
+}
+.cat-stat .cs-bar > div{
+    height:100%; border-radius:4px;
+    background:linear-gradient(90deg, var(--green), var(--green-dark));
+    transition:width .35s ease;
+}
+.cat-stat .cs-item-sum{
+    font-size:12.5px; font-weight:800; white-space:nowrap; flex-shrink:0;
+    padding-top:2px; font-variant-numeric:tabular-nums;
+}
+
+/* Pastdagi jamlanma satri */
+.cat-stat + .cs-foot, .cs-foot{
+    margin-top:14px; padding:11px 14px;
+    background:var(--green-soft); border-radius:11px;
+    font-size:12.5px; font-weight:700; color:var(--green-darker);
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.cs-foot svg{ flex-shrink:0; }
+.cs-foot b{ font-weight:800; }
+
+/* Mobil */
+@media (max-width:860px){
+    .cat-stat{ padding:13px 14px; }
+    .cat-stat .cs-head{ gap:10px; padding-bottom:10px; margin-bottom:10px; }
+    .cat-stat .cs-ico{ width:34px; height:34px; border-radius:10px; }
+    .cat-stat .cs-name{ font-size:13.5px; white-space:normal; }
+    .cat-stat .cs-rev-num{ font-size:13.5px; }
+    .cat-stat .cs-item{ gap:9px; }
+    .cat-stat .cs-rank{ width:20px; height:20px; font-size:10.5px; }
+    .cat-stat .cs-item-name{ font-size:12px; }
+    .cat-stat .cs-item-sum{ font-size:12px; }
+    .cs-foot{ font-size:11.5px; padding:10px 12px; }
+}
+
+@media (max-width:380px){
+    .cat-stat{ padding:12px; }
+    .cat-stat .cs-meta{ font-size:11px; }
+    .cat-stat .cs-item-qty{ font-size:10.5px; }
+}
+
+/* Chop etishda fon va ustunlar saqlanadi */
+@media print{
+    .cat-stat{ break-inside:avoid; }
+    .cs-foot{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}

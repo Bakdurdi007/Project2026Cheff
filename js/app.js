@@ -2063,6 +2063,12 @@ const UI = {
       <div>${icon('calendar', 15)} <b>${dmyLabel(from)}</b> — <b>${dmyLabel(to)}</b></div>
       <div>Buyurtmalar: <b>${inRange.length} ta</b> · To'langan: <b>${paid.length} ta</b></div>
       <div>Yuklanadigan summa: <b>${money(revenue)}</b></div>`;
+
+        /* Sana oralig'i o'zgarganda bo'limlar bo'yicha panelni ham yangilaymiz */
+        if (SESSION.role === 'admin' && document.getElementById('report-by-category-top')) {
+            clearTimeout(UI._catTopT);
+            UI._catTopT = setTimeout(() => UI.renderTopByCategory(), 250);
+        }
     },
 
     /* CSV faylni tayyorlab yuklab berish */
@@ -2200,9 +2206,91 @@ const UI = {
         toast('Hisobot yuklab olindi: ' + fname);
     },
 
+    /* =========================================================
+       BO'LIMLAR BO'YICHA — har bir toifada eng ko'p sotilganlar
+       Sana oralig'iga bog'liq: preset tugmalari bosilganda qayta yuklanadi
+    ========================================================= */
+    async renderTopByCategory() {
+        const box = document.getElementById('report-by-category-top');
+        if (!box) return;
+
+        const { from, to } = UI.readRange();
+
+        /* Yuklanmoqda holati */
+        box.innerHTML = '<div class="empty-hint">' +
+            '<span class="spin" style="display:inline-block;">' + icon('settings', 16) + '</span>' +
+            ' Yuklanmoqda...</div>';
+
+        let data;
+        try {
+            const { data: res, error } = await sb.rpc('cafe_top_by_category', {
+                p_cafe_id: SESSION.cafeId,
+                p_from: from,
+                p_to: to,
+                p_limit: 5,
+            });
+            if (error) throw error;
+            data = res;
+        } catch (e) {
+            box.innerHTML = '<div class="empty-hint">Ma\'lumotni yuklab bo\'lmadi: ' +
+                esc(supaErrorMessage(e)) + '</div>';
+            return;
+        }
+
+        const cats = Array.isArray(data) ? data : [];
+        const totalRevenue = cats.reduce((s, c) => s + Number(c.category_revenue || 0), 0);
+
+        if (!cats.length) {
+            box.innerHTML = '<div class="empty-hint">Bu oraliqda to\'langan buyurtma yo\'q</div>';
+            return;
+        }
+
+        const fmtRange = dmyLabel(from) + ' — ' + dmyLabel(to);
+
+        box.innerHTML = cats.map(c => {
+            const rev = Number(c.category_revenue || 0);
+            const share = totalRevenue > 0 ? (rev / totalRevenue * 100) : 0;
+            const items = (c.items || []);
+            const maxItem = Math.max(1, ...items.map(it => Number(it.revenue || 0)));
+
+            return `
+        <div class="cat-stat">
+          <div class="cs-head">
+            <div class="cs-ico">${icon(c.category_icon || 'grid', 17)}</div>
+            <div class="cs-title">
+              <div class="cs-name">${esc(c.category_name || 'Boshqa')}</div>
+              <div class="cs-meta">${items.length} ta mahsulot · ${share.toFixed(1)}% ulush</div>
+            </div>
+            <div class="cs-rev">
+              <div class="cs-rev-num">${money(rev)}</div>
+              <div class="cs-rev-lbl">tushum</div>
+            </div>
+          </div>
+          <div class="cs-items">
+            ${items.map((it, i) => `
+              <div class="cs-item">
+                <span class="cs-rank">${i + 1}</span>
+                <div class="cs-item-body">
+                  <div class="cs-item-row">
+                    <span class="cs-item-name">${esc(it.item_name)}</span>
+                    <span class="cs-item-qty">${qtyLabel(it.qty_sold, it.unit || 'dona')}</span>
+                  </div>
+                  <div class="cs-bar">
+                    <div style="width:${(Number(it.revenue || 0) / maxItem * 100).toFixed(1)}%"></div>
+                  </div>
+                </div>
+                <span class="cs-item-sum">${money(it.revenue)}</span>
+              </div>`).join('') || '<div class="empty-hint" style="padding:12px 0;">Mahsulot yo\'q</div>'}
+          </div>
+        </div>`;
+        }).join('') + `
+        <div class="cs-foot">${icon('calendar', 13)} Oraliq: <b>${fmtRange}</b> · Jami: <b>${money(totalRevenue)}</b></div>`;
+    },
+
     async renderReport() {
         UI.setRangePresetDefaults();
         UI.updateRangePreview();
+        UI.renderTopByCategory();   /* bolimlar boyicha panelni ham yuklaymiz */
 
         let rep;
         try {
